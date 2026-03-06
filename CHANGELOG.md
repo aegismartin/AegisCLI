@@ -5,6 +5,26 @@ The format is based on [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.4.0a0] - 2026-03-06
+
+### Added
+- `exporter.py` added to `core/utils/` — builds structured JSON envelopes for all tool output
+- `selector.py` added to `tools/profiler/` — routing logic extracted out of `profiler.py` into its own class
+- `log_json()` added to `logger.py` — handles JSON disk writes, only fires when `--log` is active
+
+### Changed
+- `profiler.py` converted to ABC — enforces `fetch()`, `display()`, `export()`, `result()` on all submodules, adds target validation in `__init__`
+- `cli.py` now routes through `Profiler_Selector` instead of instantiating `Profiler` directly, `mode` parameter removed
+- `--log` now saves a `.json` file to `~/.aegiscli/logs/` instead of a plain `.log` file — JSON is the ground truth for logging going forward. Pretty `.log` file still gets created but is ANSI-polluted and reserved for future use
+- JSON is never written to disk without `--log` — previously `exporter.dump()` wrote unconditionally
+- Error messages now always visible regardless of `-v` — previously all errors were silently swallowed unless verbose mode was active
+- whois submodule refactored: `fetch()` handles RDAP only, `fallback()` handles legacy whois only, `self.raw_whois` removed in favor of unified `self.data`, `mode_handler()` renamed to `display()`
+- DNS submodule: `fetch()` wrapper added to satisfy ABC contract, wraps `resolve_record()` and `reverse_all()`
+- Web submodule: `pretty()` renamed to `display()`, export logic extracted into `export()` method
+- All three profiler submodules now follow consistent structure — `fetch()`, `display()`, `export()`, `result()` with uniform error handling and timing output
+
+---
+
 ## [0.3.1a0] - 2026-02-17
 
 ### Changed
@@ -55,4 +75,3 @@ The format is based on [Semantic Versioning](https://semver.org/).
 - WHOIS submodule for **Profiler** module.
 - CLI entry point `aegiscli`.
 - Logging was added
-

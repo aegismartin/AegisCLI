@@ -39,8 +39,8 @@ def main():
 
     try:
         if args.command == "profiler":
-            from aegiscli.tools.profiler.profiler import Profiler
-            initializator = Profiler(settings=None, submodule=args.submodule, mode=None, target=args.target)
+            from aegiscli.tools.profiler.selector import Profiler_Selector
+            initializator = Profiler_Selector(settings=None, submodule=args.submodule, advanced=False, target=args.target)
             initializator.selector()
 
     except Exception as e:

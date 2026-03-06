@@ -1,35 +1,36 @@
-class Profiler:
-    def __init__(self, settings, submodule, mode, target):
-        self.submodule = submodule
-        self.mode = mode
-        self.target = target
-        self.settings = settings
+from abc import ABC, abstractmethod
 
-    def selector(self):
-        if self.submodule == 'whois':
-            import aegiscli.tools.profiler.submodules.whois as whois
-            script = whois.Whois(
-                settings=self.settings,
-                submodule=self.submodule,
-                mode=self.mode,
-                target=self.target
-            )
-            script.domain_info()
-        elif self.submodule == 'dns':
-            import aegiscli.tools.profiler.submodules.dns_module as dns_module
-            script = dns_module.DNS(
-                settings=self.settings,
-                submodule=self.submodule,
-                mode=self.mode,
-                target=self.target
-            )
-            script.result()
-        elif self.submodule == 'web':
-            import aegiscli.tools.profiler.submodules.web as web
-            script = web.WebFinger(
-                settings=self.settings,
-                submodule=self.submodule,
-                mode=self.mode,
-                target=self.target
-            )
-            script.result()
+
+class Profiler(ABC):
+    def __init__(self, settings: dict | None, submodule: str | None, advanced: bool, target: str):
+        # validate target early — no submodule should ever run against a blank target
+        if not target or not target.strip():
+            raise ValueError("Target cannot be empty")
+
+        self.settings = settings
+        self.submodule = submodule
+        self.advanced = advanced
+        self.target = target.strip()
+
+    @abstractmethod
+    def fetch(self):
+        """Collect all data required for this tool. Populate class variables."""
+        pass
+
+    @abstractmethod
+    def display(self):
+        """Format and print results to terminal."""
+        pass
+
+    @abstractmethod
+    def export(self):
+        """Serialize results to JSON envelope. Write to disk only if --log is active."""
+        pass
+
+    @abstractmethod
+    def result(self):
+        """Orchestrate the full pipeline: fetch → display → export."""
+        pass
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} target={self.target!r} submodule={self.submodule!r}>"

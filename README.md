@@ -4,17 +4,17 @@ AegisCLI is a lightweight recon framework designed to eliminate tool-juggling he
 
 ---
 
-## 🚨 Current Version: **0.3.1 Alpha**
+## 🚨 Current Version: **0.4.0 Alpha**
 
-This release introduces the Web Fingerprinter submodule, centralized text formatting utilities, and improved project structure with better output consistency.
+This release focuses on architectural hardening — structured JSON output, strict module contracts, consistent error handling, and clean separation of routing from tool logic.
 
 ---
 
-## ✨ Features (v0.3.1 Alpha)
+## ✨ Features (v0.4.0 Alpha)
 
 ### Profiler Module
 
-* **WHOIS / RDAP Lookup** with intelligent fallback
+* **WHOIS / RDAP Lookup** with intelligent fallback to legacy whois protocol
 * **DNS Resolver** supporting:
   * A / AAAA
   * MX
@@ -35,14 +35,17 @@ This release introduces the Web Fingerprinter submodule, centralized text format
 * **Verbose Mode (`-v`)**
   Shows step-by-step internal execution for debugging and transparency.
 * **Logging (`--log`)**
-  Saves timestamped logs under:
+  Saves structured JSON output to:
   ```
-  ~/.aegiscli/logs
+  ~/.aegiscli/logs/
   ```
+  JSON is the ground truth log format. Each tool run produces a timestamped `.json` file with a standard envelope (`tool`, `target`, `timestamp`, `data`).
+
+  > **Note:** Pretty `.log` text file logging has been suspended as of `0.4.0a0` — terminal output contains ANSI escape codes that make plain text logs unreadable. The `.log` format may be revisited or removed in a future release.
 * **Centralized Formatting**
   Consistent color-coded terminal output across all modules via `core/helpers/formatter.py`.
 * **Strict modular architecture**
-  Each tool is isolated under `aegiscli/tools/<module>/<submodule>`.
+  Each tool enforces `fetch()`, `display()`, `export()`, `result()` via abstract base class.
 * **Consistent CLI interface**
   All commands follow the pattern:
   ```
@@ -59,17 +62,17 @@ This release introduces the Web Fingerprinter submodule, centralized text format
 # WHOIS / RDAP lookup with verbose mode
 aegiscli profiler whois -v example.com
 
-# DNS records with logging to ~/.aegiscli/logs
+# DNS records with JSON logging to ~/.aegiscli/logs
 aegiscli profiler dns --log example.com
 
-# DNS records verbose mode + logging 
+# DNS records verbose mode + logging
 aegiscli profiler dns -v --log example.com
 
 # Web fingerprinting
 aegiscli profiler web --log httpbin.org
 
 # Web fingerprinting with verbose mode and logging
-aegiscli profiler web httpbin.org
+aegiscli profiler web -v httpbin.org
 ```
 
 ---
@@ -80,12 +83,15 @@ AegisCLI follows a clean separation-of-concerns model:
 
 ```
 aegiscli/
-  cli                # Command router, argument parsing, global flags
+  cli.py              # Argument parsing, global flags, entry point
   core/
-    utils/            # logger.py, flagger.py (verbose manager)
+    utils/            # logger.py, flagger.py, exporter.py
     helpers/          # formatter.py (text formatting & visualization)
   tools/
-    profiler/         # WHOIS, DNS, Web modules
+    profiler/
+      profiler.py     # Abstract base class — enforces tool contract
+      selector.py     # Routes submodule selection
+      submodules/     # whois.py, dns_module.py, web.py
     scanner/          # (planned)
     enumerator/       # (planned)
     analyser/         # (planned)
@@ -96,9 +102,9 @@ Design principles:
 
 * No global mutable state
 * Tools never depend on each other's internals
-* Uniform interfaces across all modules
-* High readability and maintainability
-* Predictable output for automation and chaining
+* Uniform interfaces across all modules enforced at base class level
+* Errors always visible — verbose mode is for diagnostics, not error reporting
+* Nothing written to disk without explicit `--log`
 
 ---
 
@@ -113,10 +119,9 @@ Design principles:
 
 * Start Scanner module (ports, services, banners)
 * Enumerator module with optional ffuf adapters
-* Analyser module (Using external APIs for reconnisance)
+* Analyser module (using external APIs for reconnaissance)
 * JSON configuration engine
-* Tool Chaining
-
+* Tool chaining via orchestrator
 
 ### Long-term
 
@@ -126,19 +131,20 @@ Design principles:
 * Injector module (SQLi testing, payload logic)
 * Log Analyser
 
-
 ---
 
 ## 📜 Changelog
 
 Full history available in `CHANGELOG.md`.
 
-Latest changes in **0.3.1 Alpha**:
+Latest changes in **0.4.0 Alpha**:
 
-* Added Web Fingerprinter submodule to Profiler
-* Added centralized text formatting via `core/helpers/formatter.py`
-* Restructured project: moved logger.py and flagger.py to `core/utils/`
-* Improved output consistency and smart truncation for long data lists
+* `exporter.py` added — structured JSON envelope output for all tools
+* `selector.py` extracted — routing separated from base class
+* `profiler.py` converted to ABC — strict contract enforced on all submodules
+* `--log` now saves JSON only, nothing written to disk without the flag
+* Consistent error handling across all profiler submodules
+* whois, dns, web submodules brought to uniform structure
 
 ---
 
