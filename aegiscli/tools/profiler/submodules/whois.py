@@ -5,7 +5,7 @@ import subprocess
 from aegiscli.core.utils.logger import log, logging, log_json
 from aegiscli.core.utils.flagger import verbose
 from aegiscli.core.utils import exporter
-import aegiscli.tools.profiler.profiler as profiler
+from aegiscli.tools.profiler.profiler import Profiler
 from aegiscli.core.helpers.formatter import s
 import time
 
@@ -25,12 +25,13 @@ def whois_shell(domain):
         return None
 
 
-class Whois(profiler.Profiler):
-    def __init__(self, settings, submodule, advanced, target):
-        super().__init__(settings, submodule, advanced, target)
+class Whois(Profiler):
+    def __init__(self, settings, submodule, target):
+        super().__init__(settings, submodule, target)
         self.data = None   # holds whatever came back — RDAP dict or raw whois string
         self.mode = None   # "rdap" | "whois_raw" | "none" — determines how data is handled downstream
         self.info = {}     # structured RDAP fields, populated by rdap_lookup() only
+        self.elapsed = None
 
     def fetch(self):
         # RDAP only — modern REST-based protocol that returns structured JSON
@@ -177,6 +178,7 @@ class Whois(profiler.Profiler):
         envelope = exporter.dump(
             tool="profiler.whois",
             target=self.target,
+            elapsed=self.elapsed,
             data=data_payload
         )
         # log_json only fires if --log flag was passed at CLI level
@@ -185,14 +187,14 @@ class Whois(profiler.Profiler):
             verbose.ok(f"JSON log saved to {path}")
 
     def result(self):
-        overall_start = time.time()
+        start = time.time()
 
         try:
             self.fetch()        # try RDAP, set self.data + self.mode
             self.fallback()     # try raw whois if RDAP failed, no-op otherwise
 
-            overall_time = time.time() - overall_start
-            verbose.ok(f"WHOIS lookup completed in {overall_time:.3f}s total")
+            self.elapsed = round(time.time() - start, 2)
+            verbose.ok(f"WHOIS lookup completed in {self.elapsed:.3f}s total")
             verbose.space()
 
             self.display()  # display based on self.mode
@@ -204,11 +206,11 @@ class Whois(profiler.Profiler):
             self.export()       # serialize to JSON, log if --log
 
         except Exception as e:
-            overall_time = time.time() - overall_start
-            log(f"{Fore.RED}[ERROR]{Style.RESET_ALL} WHOIS aborted after {overall_time:.3f}s — {type(e).__name__}")
+            self.elapsed = time.time() - start
+            log(f"{Fore.RED}[ERROR]{Style.RESET_ALL} WHOIS aborted after {self.elapsed:.3f}s — {type(e).__name__}")
             raise
 
 
 if __name__ == "__main__":
-    initializator = Whois(settings=None, submodule=None, advanced=False, target="httpbin.org")
+    initializator = Whois(settings=None, submodule=None, target="httpbin.org")
     initializator.result()

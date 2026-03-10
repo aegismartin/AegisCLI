@@ -5,7 +5,7 @@ LOG_DIR = os.path.expanduser("~/.aegiscli/logs")
 os.makedirs(LOG_DIR, exist_ok=True)
 
 
-def dump(tool: str, target: str, data: dict) -> dict:
+def dump(tool: str, target: str, data: dict, elapsed: int) -> dict:
     """
     Builds and returns the standard AegisCLI envelope dict.
     Does NOT write to disk — that's logger's job.
@@ -15,6 +15,7 @@ def dump(tool: str, target: str, data: dict) -> dict:
         "tool": tool,
         "target": target,
         "timestamp": datetime.now().isoformat(),
+        "elapsed":elapsed,
         "data": data
     }
 

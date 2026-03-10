@@ -1,5 +1,5 @@
 import httpx
-import aegiscli.tools.profiler.profiler as profiler
+from aegiscli.tools.profiler.profiler import Profiler
 from aegiscli.core.utils.logger import log, logging, log_json
 from aegiscli.core.utils.flagger import verbose
 from aegiscli.core.utils import exporter
@@ -10,15 +10,14 @@ import socket
 import time
 
 
-class WebFinger(profiler.Profiler):
-    def __init__(self, settings, submodule, advanced, target):
-        super().__init__(settings, submodule, advanced, target)
-        self.target = target
+class WebFinger(Profiler):
+    def __init__(self, settings, submodule, target):
+        super().__init__(settings, submodule, target)
 
         # strip protocol to get bare domain for SSL socket connection
         self.domain = self.target.replace("http://", "") if self.target.startswith("http://") else self.target
         self.domain = self.target.replace("https://", "") if self.target.startswith("https://") else self.target
-
+        self.elapsed = None
         self.tab = " " * 4
 
         # whitelist of headers worth extracting — everything else is noise
@@ -248,6 +247,7 @@ class WebFinger(profiler.Profiler):
         envelope = exporter.dump(
             tool="profiler.web",
             target=self.target,
+            elapsed=self.elapsed,
             data={
                 "connection": self.connection_data,
                 "headers": self.headers,
@@ -262,7 +262,7 @@ class WebFinger(profiler.Profiler):
     def result(self):
         verbose.write(f"Starting fingerprint: {self.target}")
         verbose.space()
-        overall_start = time.time()
+        start = time.time()
 
         try:
             self.fetch()           # HTTP GET, populate self.response
@@ -277,19 +277,19 @@ class WebFinger(profiler.Profiler):
             self.get_cert()        # open raw SSL socket, populate self.certs
             verbose.space()
 
-            overall_time = time.time() - overall_start
-            verbose.ok(f"Scan completed in {overall_time:.3f}s total")
+            self.elapsed = round(time.time() - start, 2)
+            verbose.ok(f"Scan completed in {self.elapsed:.3f}s total")
             verbose.space()
 
             self.display()
             self.export()
 
         except Exception as e:
-            overall_time = time.time() - overall_start
-            log(f"{Fore.RED}[ERROR]{Style.RESET_ALL} Scan aborted after {overall_time:.3f}s — {type(e).__name__}")
+            self.elapsed = time.time() - start
+            log(f"{Fore.RED}[ERROR]{Style.RESET_ALL} Scan aborted after {self.elapsed:.3f}s — {type(e).__name__}")
             raise
 
 
 if __name__ == "__main__":
-    initializator = WebFinger(settings=None, submodule=None, advanced=False, target="httpbin.org")
+    initializator = WebFinger(settings=None, submodule=None, target="httpbin.org")
     initializator.result()

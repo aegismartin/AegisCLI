@@ -1,7 +1,6 @@
 class Profiler_Selector:
-    def __init__(self, settings, submodule, advanced, target):
+    def __init__(self, settings, submodule, target):
         self.submodule = submodule
-        self.advanced = advanced
         self.target = target
         self.settings = settings
 
@@ -11,7 +10,6 @@ class Profiler_Selector:
             script = whois.Whois(
                 settings=self.settings,
                 submodule=self.submodule,
-                advanced=self.advanced,
                 target=self.target
             )
             script.result()
@@ -21,7 +19,6 @@ class Profiler_Selector:
             script = dns_module.DNS(
                 settings=self.settings,
                 submodule=self.submodule,
-                advanced=self.advanced,
                 target=self.target
             )
             script.result()
@@ -30,7 +27,6 @@ class Profiler_Selector:
             script = web.WebFinger(
                 settings=self.settings,
                 submodule=self.submodule,
-                advanced=self.advanced,
                 target=self.target
             )
             script.result()

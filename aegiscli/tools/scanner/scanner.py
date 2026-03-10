@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class Profiler(ABC):
+class Scanner(ABC):
     def __init__(self, settings, submodule, target):
         # validate target early — no submodule should ever run against a blank target
         if not target or not target.strip():

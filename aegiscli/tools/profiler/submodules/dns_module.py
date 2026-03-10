@@ -1,6 +1,6 @@
 import dns.resolver
 import dns.reversename
-import aegiscli.tools.profiler.profiler as profiler
+from aegiscli.tools.profiler.profiler import Profiler
 from aegiscli.core.utils.logger import log, logging, log_json
 from aegiscli.core.utils.flagger import verbose
 from aegiscli.core.utils import exporter
@@ -9,13 +9,13 @@ from aegiscli.core.helpers.formatter import s
 import time
 
 
-class DNS(profiler.Profiler):
-    def __init__(self, settings, submodule, advanced, target):
-        super().__init__(settings, submodule, advanced, target)
-        self.target = target
+class DNS(Profiler):
+    def __init__(self, settings, submodule, target):
+        super().__init__(settings, submodule, target)
         self.rtype = ["A", "AAAA", "MX", "TXT", "NS", "CNAME", "SOA"]  # record types to query
         self.dns_records = {}     # populated by resolve_record() — only types that returned data
         self.reverse_results = {} # populated by reverse_all() — only IPs that have PTR records
+        self.elapsed = None
 
     def fetch(self):
         # satisfies ABC contract — wraps both data collection steps
@@ -143,6 +143,7 @@ class DNS(profiler.Profiler):
         envelope = exporter.dump(
             tool="profiler.dns",
             target=self.target,
+            elapsed=self.elapsed,
             data={
                 "dns_records": self.dns_records,
                 "reverse_dns": self.reverse_results
@@ -156,25 +157,25 @@ class DNS(profiler.Profiler):
     def result(self):
         verbose.write(f"Starting DNS enumeration for: {self.target}")
         verbose.space()
-        overall_start = time.time()
+        start = time.time()
 
         try:
             self.fetch()           # resolve_record + reverse_all
             verbose.space()
 
-            overall_time = time.time() - overall_start
-            verbose.ok(f"DNS enumeration completed in {overall_time:.3f}s total")
+            self.elapsed = round(time.time() - start, 2)
+            verbose.ok(f"DNS enumeration completed in {self.elapsed:.3f}s total")
             verbose.space()
 
             self.display()  # formatted terminal output
             self.export()   # JSON envelope + optional log
 
         except Exception as e:
-            overall_time = time.time() - overall_start
-            log(f"{Fore.RED}[ERROR]{Style.RESET_ALL} DNS aborted after {overall_time:.3f}s — {type(e).__name__}")
+            self.elapsed = time.time() - start
+            log(f"{Fore.RED}[ERROR]{Style.RESET_ALL} DNS aborted after {self.elapsed:.3f}s — {type(e).__name__}")
             raise
 
 
 if __name__ == "__main__":
-    initializator = DNS(settings=None, submodule=None, advanced=False, target="httpbin.org")
+    initializator = DNS(settings=None, submodule=None, target="httpbin.org")
     initializator.result()

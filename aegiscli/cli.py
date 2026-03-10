@@ -18,15 +18,27 @@ def main():
     # main categories
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # profiler category, inherits global flags
+    # profiler tool
     profiler_parser = subparsers.add_parser(
         "profiler",
         help="Profiler tool",
         parents=[global_parser]
     )
-
     profiler_parser.add_argument("submodule", choices=["whois", "dns", "web"])
     profiler_parser.add_argument("target")
+
+    # scanner tool
+    scanner_parser = subparsers.add_parser(
+        "scanner",
+        help="Scanner tool",
+        parents=[global_parser]
+    )
+
+    scanner_parser.add_argument("submodule", choices=["port"])
+    scanner_parser.add_argument("--ports", type=str)
+    scanner_parser.add_argument("target")
+
+
 
     args = parser.parse_args()
 
@@ -40,7 +52,11 @@ def main():
     try:
         if args.command == "profiler":
             from aegiscli.tools.profiler.selector import Profiler_Selector
-            initializator = Profiler_Selector(settings=None, submodule=args.submodule, advanced=False, target=args.target)
+            initializator = Profiler_Selector(settings=None, submodule=args.submodule, target=args.target)
+            initializator.selector()
+        elif args.command == "scanner":
+            from aegiscli.tools.scanner.selector import Scanner_Selector
+            initializator = Scanner_Selector(settings=None, submodule=args.submodule, target=args.target, ports=args.ports)
             initializator.selector()
 
     except Exception as e:

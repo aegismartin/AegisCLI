@@ -34,7 +34,6 @@ def flattener(obj, _parent_key=None):
         
         if _parent_key == "subjectAltName":
             return flat_list
-        
 
         if all(isinstance(item, list) and len(item) == 2 and 
                isinstance(item[0], str) and isinstance(item[1], str) 
@@ -106,6 +105,45 @@ class Special_Text:
             if k != "name":
                 log(f"{tab}{self.tab}{Fore.CYAN}{k}:{Style.RESET_ALL} {v}")
 
-                
+    def print_table(self, rows, columns, summary_label, col_widths=None):
+        """
+        Renders tabular data cleanly.
+        rows:      list of dicts e.g. [{"port": 80, "service": "http"}, ...]
+        columns:   ordered list of keys to display e.g. ["port", "service"]
+        col_widths: optional list of fixed widths, auto-calculated if None
+        """
+        if not rows:
+            log(f"{Fore.YELLOW}  No results.{Style.RESET_ALL}")
+            return
+
+        if col_widths is None:
+            col_widths = []
+            for col in columns:
+                max_val = max(len(str(row.get(col, ""))) for row in rows)
+                col_widths.append(max(len(col), max_val) + 2)
+
+        # Header
+        header = ""
+        for col, width in zip(columns, col_widths):
+            header += f"{Fore.CYAN}{col.upper():<{width}}{Style.RESET_ALL}"
+        log(header)
+
+        # Divider
+        log(f"{Fore.CYAN}{'─' * 75}{Style.RESET_ALL}")
+
+        # Rows
+        for row in rows:
+            line = ""
+            for col, width in zip(columns, col_widths):
+                val = str(row.get(col, ""))
+                line += f"{Fore.WHITE}{val:<{width}}{Style.RESET_ALL}"
+            log(line)
+
+        # Summary
+        log(f"\n{Style.DIM}{len(rows)} {summary_label}(s){Style.RESET_ALL}")
+    
+    def message(self, text):
+        log(f"{Style.DIM}{text}{Style.RESET_ALL}")
+
 
 s = Special_Text()
