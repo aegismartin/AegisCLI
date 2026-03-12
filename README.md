@@ -4,9 +4,9 @@ AegisCLI is a lightweight recon framework designed to eliminate tool-juggling he
 
 ---
 
-## 🚨 Current Version: **0.5.0 Alpha**
+## 🚨 Current Version: **0.5.1 Alpha**
 
-This release introduces the **Scanner module** — async TCP port scanning with verbose diagnostics, and consistent JSON output that plugs directly into the existing envelope standard. Scanner is still green but it will grow more useful soon
+This release adds **banner grabbing** to the port scanner — passive reads for known service ports, HTTP/HTTPS probing with a real User-Agent, and SSL/TLS upgrade with SNI support. Port detection and banner grabbing are fully decoupled — a failed banner never hides an open port.
 
 ---
 
@@ -30,7 +30,9 @@ This release introduces the **Scanner module** — async TCP port scanning with 
   * 0.7s timeout per port — tuned for balance between speed and accuracy on most networks
   * Flexible port targeting — default top 1024, range (`1-65535`), or list (`80,443,8080`)
   * Service name resolution from OS service database
-  * Verbose diagnostics — resolved IP, task queue size, concurrency parameters, theoretical vs actual scan time, closed/filtered count
+  * **Banner grabbing** — passive read for known service ports (SSH, FTP, SMTP, MySQL, Redis, etc.), HTTP GET probe for web ports, SSL/TLS upgrade with SNI for HTTPS ports
+  * Two-step port detection — plain TCP confirms open status first, banner grab is a separate step that never affects port reporting
+  * Verbose diagnostics — resolved IP, task queue size, concurrency parameters, theoretical vs actual scan time, per-port banner grab status and result preview
 
 ### Framework Capabilities
 
@@ -130,14 +132,13 @@ Design principles:
 
 ### Short-term
 
-* Give banner grabbing ability to `port.py`
+* Add service discovery by banner grabbing
 * Scanner `host.py` — host discovery, ICMP ping, TCP fallback, TTL-based OS hint
 * Web Fingerprinter upgrade — deeper tech stack detection, framework fingerprinting
-* Scanner `udp.py` — UDP port scanning
 
 ### Medium-term
 
-* Add service discovery by banner grabbing
+* Scanner `udp.py` — UDP port scanning
 * Upgrade `dns` and `whois` submodules to actively interact with their discovery and dig deeper
 * `settings.json` configuration engine — user-configurable defaults for concurrency, timeouts, output behavior, and module-specific parameters
 * Enumerator module with ffuf or gobuster integration
@@ -156,13 +157,13 @@ Design principles:
 
 Full history available in `CHANGELOG.md`.
 
-Latest changes in **0.5.0 Alpha**:
+Latest changes in **0.5.1 Alpha**:
 
-* Scanner module introduced — `scanner.py` ABC, `selector.py`, `port.py` submodule
-* Async TCP port scanner with semaphore concurrency, flexible port targeting, service ID
-* JSON envelope standardized across all modules — `elapsed` at envelope level, rounded to 2dp
-* `advanced` dead parameter removed from Profiler selector
-* Minor internal cleanup across Profiler submodules
+* Banner grabbing added to `port.py` — passive read, HTTP probe, and HTTPS/SSL probe with SNI
+* Two-step detection architecture — plain TCP confirms open status, banner grab is fully decoupled
+* `_grab_http_banner()` extracted as shared helper — used by both HTTP and HTTPS paths
+* DNS resolution bug fixed in `fetch()` — `gethostbyname` now inside `try` block where `socket.gaierror` can actually be caught
+* Verbose output added for banner grabbing — per-port probe type, TLS handshake confirmation, banner preview, and failure reason
 
 ---
 

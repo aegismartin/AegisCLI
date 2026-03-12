@@ -347,6 +347,13 @@ expect_output "port: finds port 80 on $TARGET_DOMAIN" "80" \
 expect_output "port: finds port 443 on $TARGET_DOMAIN" "443" \
     aegiscli scanner port --ports 80,443 "$TARGET_DOMAIN"
 
+expect_output "port: banner shown for port 80" "HTTP\|200\|nginx\|apache\|server" \
+    aegiscli scanner port --ports 80,443 "$TARGET_DOMAIN"
+
+expect_output "port: banner shown for port 443" "HTTP\|200\|nginx\|cloudflare\|server" \
+    aegiscli scanner port --ports 80,443 "$TARGET_DOMAIN"
+
+
 expect_output "port: verbose shows resolution" "resolv\|resolved\|ip" \
     aegiscli scanner port -v --ports 80,443 "$TARGET_DOMAIN"
 
@@ -406,26 +413,49 @@ assert e == round(e, 2), f'elapsed not rounded: {e}'
 print('ok')
 " > /dev/null 2>&1 && pass "port: elapsed rounded to 2dp" || fail "port: elapsed not rounded to 2dp"
 
-    # verify open_ports contains only integers
+    # verify open_ports is a list of dicts with port and banner keys
     python3 -c "
 import json
 with open('$PORT_LOG') as f:
     d = json.load(f)
 ports = d['data']['open_ports']
-assert all(isinstance(p, int) for p in ports), 'ports contain non-int values'
+assert all(isinstance(p, dict) for p in ports), 'open_ports entries are not dicts'
+assert all('port' in p for p in ports), 'open_ports entries missing port key'
+assert all('banner' in p for p in ports), 'open_ports entries missing banner key'
 print('ok')
-" > /dev/null 2>&1 && pass "port: open_ports contains only integers" || fail "port: open_ports contains non-integer values"
+" > /dev/null 2>&1 && pass "port: open_ports entries are dicts with port and banner keys" || fail "port: open_ports structure malformed"
+
+    # verify port values are integers
+    python3 -c "
+import json
+with open('$PORT_LOG') as f:
+    d = json.load(f)
+ports = d['data']['open_ports']
+assert all(isinstance(p['port'], int) for p in ports), 'port values contain non-int'
+print('ok')
+" > /dev/null 2>&1 && pass "port: port values are integers" || fail "port: port values are not integers"
 
     # verify 80 and 443 are in the results
     python3 -c "
 import json
 with open('$PORT_LOG') as f:
     d = json.load(f)
-ports = d['data']['open_ports']
-assert 80 in ports, '80 missing'
-assert 443 in ports, '443 missing'
+port_numbers = [p['port'] for p in d['data']['open_ports']]
+assert 80 in port_numbers, '80 missing'
+assert 443 in port_numbers, '443 missing'
 print('ok')
 " > /dev/null 2>&1 && pass "port: 80 and 443 confirmed open in JSON" || fail "port: 80 or 443 missing from open_ports"
+
+    # verify at least one banner was grabbed
+    python3 -c "
+import json
+with open('$PORT_LOG') as f:
+    d = json.load(f)
+ports = d['data']['open_ports']
+banners = [p['banner'] for p in ports if p['banner'] is not None]
+assert len(banners) > 0, 'no banners grabbed'
+print('ok')
+" > /dev/null 2>&1 && pass "port: at least one banner grabbed" || fail "port: no banners found in JSON"
 
 else
     fail "port: no log file found"

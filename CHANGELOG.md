@@ -5,6 +5,24 @@ The format is based on [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.5.1a0] - 2026-03-12
+
+### Added
+- `port.py` — banner grabbing with three strategies: passive read (SSH, FTP, SMTP, Redis, etc.), HTTP GET probe (port 80 family), HTTPS probe with SSL/SNI (port 443 family)
+- `_grab_http_banner()` — shared async helper used by both HTTP and HTTPS paths
+- Verbose output for banner grabbing — probe type, TLS handshake confirmation, result preview, failure reason
+
+### Changed
+- `check_port()` split into two decoupled steps — plain TCP confirms open status, banner grab is separate; banner failure never hides an open port
+- `display()` shows `None` for ports with no banner instead of empty cell
+- DNS resolution bug fixed in `fetch()` — `gethostbyname()` moved inside `try` block so `socket.gaierror` is actually catchable
+- `stress_test.sh` updated for the new checks.
+
+### Architecture
+- SSL context is now a local variable per coroutine — eliminates the `self.ctx` race condition from concurrent coroutines sharing state
+
+---
+
 ## [0.5.0a0] - 2026-03-10
 
 ### Added
@@ -15,6 +33,7 @@ The format is based on [Semantic Versioning](https://semver.org/).
 - Verbose mode for Scanner — surfaces resolved IP, task queue size, concurrency parameters, theoretical scan time, and closed/filtered port count
 - `Scanner_Selector` added — routes submodule selection, passes submodule-specific flags via `**kwargs` without polluting the selector signature
 - JSON log output for Scanner consistent with Profiler envelope structure
+- `stress_test.sh` was added to the repository for testing the tool in production. Does not affect the tool's capabilities and user experience
 
 ### Changed
 - JSON envelope now includes `elapsed` field at envelope level across all modules — previously missing from Profiler submodules, previously nested inside `data` in Scanner
