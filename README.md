@@ -4,9 +4,9 @@ AegisCLI is a lightweight recon framework designed to eliminate tool-juggling he
 
 ---
 
-## 🚨 Current Version: **0.5.1 Alpha**
+## 🚨 Current Version: **0.6.0 Alpha**
 
-This release adds **banner grabbing** to the port scanner — passive reads for known service ports, HTTP/HTTPS probing with a real User-Agent, and SSL/TLS upgrade with SNI support. Port detection and banner grabbing are fully decoupled — a failed banner never hides an open port.
+This release adds **host discovery** to the scanner — ICMP echo with raw sockets, TCP fallback for no-root environments, TTL-based OS fingerprinting, and full CIDR range support.
 
 ---
 
@@ -23,6 +23,15 @@ This release adds **banner grabbing** to the port scanner — passive reads for 
   * Cookie parsing with detailed attribute extraction
 
 ### Scanner Module
+
+* **Host Discovery** featuring:
+  * ICMP echo with raw sockets when root is available — faster, provides TTL
+  * TCP fallback on ports 22, 80, 443 when no root — connected or refused both confirm alive
+  * CIDR range support — sweep entire subnets (e.g. `192.168.1.0/24`)
+  * Hostname resolution via `getaddrinfo` — returns all A records, not just one
+  * TTL-based OS fingerprinting — Windows / Linux/macOS / network device hint
+  * Semaphore-controlled concurrency — 100 simultaneous probes
+  * Verbose diagnostics — host count, ICMP availability, per-host method and result
 
 * **Port Scanner** featuring:
   * Async TCP connect scanning via `asyncio` — no external dependencies
@@ -79,6 +88,15 @@ aegiscli profiler dns --log example.com
 # Web fingerprinting with verbose mode
 aegiscli profiler web -v example.com
 
+# Host discovery — single IP
+aegiscli scanner host 192.168.1.1
+
+# Host discovery — subnet sweep
+aegiscli scanner host 192.168.1.0/24
+
+# Host discovery — verbose with logging
+aegiscli scanner host -v --log 192.168.1.0/24
+
 # Port scan — default top 1024 ports
 aegiscli scanner port example.com
 
@@ -112,7 +130,7 @@ aegiscli/
     scanner/
       scanner.py      # Abstract base class
       selector.py     # Routes submodule selection
-      submodules/     # port.py
+      submodules/     # port.py, host.py
     enumerator/       # (planned)
     analyser/         # (planned)
     injector/         # (planned)
@@ -133,7 +151,6 @@ Design principles:
 ### Short-term
 
 * Add service discovery by banner grabbing
-* Scanner `host.py` — host discovery, ICMP ping, TCP fallback, TTL-based OS hint
 * Web Fingerprinter upgrade — deeper tech stack detection, framework fingerprinting
 
 ### Medium-term
@@ -157,13 +174,14 @@ Design principles:
 
 Full history available in `CHANGELOG.md`.
 
-Latest changes in **0.5.1 Alpha**:
+Latest changes in **0.6.0 Alpha**:
 
-* Banner grabbing added to `port.py` — passive read, HTTP probe, and HTTPS/SSL probe with SNI
-* Two-step detection architecture — plain TCP confirms open status, banner grab is fully decoupled
-* `_grab_http_banner()` extracted as shared helper — used by both HTTP and HTTPS paths
-* DNS resolution bug fixed in `fetch()` — `gethostbyname` now inside `try` block where `socket.gaierror` can actually be caught
-* Verbose output added for banner grabbing — per-port probe type, TLS handshake confirmation, banner preview, and failure reason
+* Host discovery added as `scanner host` submodule
+* ICMP echo with raw socket support — requires root, provides TTL and OS fingerprinting
+* TCP fallback for no-root environments — probes ports 22, 80, 443
+* CIDR range support — sweep entire subnets (e.g. `192.168.1.0/24`)
+* Hostname resolution via `getaddrinfo` — returns all A records, not just one
+* Logs export alive hosts only — dead entries stripped to keep logs clean
 
 ---
 

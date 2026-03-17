@@ -1,7 +1,7 @@
 import argparse
 import aegiscli.core.utils.logger as logger
 import aegiscli.core.utils.flagger as flagger
-
+import sys
 def main():
     parser = argparse.ArgumentParser(
         prog="aegiscli",
@@ -34,7 +34,7 @@ def main():
         parents=[global_parser]
     )
 
-    scanner_parser.add_argument("submodule", choices=["port"])
+    scanner_parser.add_argument("submodule", choices=["port", "host"])
     scanner_parser.add_argument("--ports", type=str)
     scanner_parser.add_argument("target")
 
@@ -61,6 +61,7 @@ def main():
 
     except Exception as e:
         logger.log(f"[ERROR]: {e}")
+        sys.exit(1)
 
     finally:
         if getattr(args, "log", False):

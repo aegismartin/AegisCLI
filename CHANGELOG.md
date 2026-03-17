@@ -5,6 +5,21 @@ The format is based on [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.6.0a0] - 2026-03-17
+
+### Added
+- `host.py` — host discovery submodule with ICMP echo and TCP fallback
+- ICMP ping via raw sockets — requires root, provides TTL for OS fingerprinting
+- TCP fallback on ports 22, 80, 443 — `ConnectionRefusedError` treated as alive, no root required
+- TTL-based OS hint — Windows (≥128), Linux/macOS (≥64), network device (<64)
+- CIDR range support — sweep entire subnets (e.g. `192.168.1.0/24`)
+- Hostname resolution via `getaddrinfo` — returns all A records, not just one
+
+### Architecture
+- Dead hosts excluded from JSON log output — alive-only export keeps logs clean
+- Semaphore cap set to 100 — lower than `port.py` to account for broader host ranges
+
+
 ## [0.5.1a0] - 2026-03-12
 
 ### Added

@@ -6,8 +6,8 @@ class Profiler_Selector:
 
     def selector(self):
         if self.submodule == 'whois':
-            import aegiscli.tools.profiler.submodules.whois as whois
-            script = whois.Whois(
+            from aegiscli.tools.profiler.submodules.whois import Whois
+            script = Whois(
                 settings=self.settings,
                 submodule=self.submodule,
                 target=self.target
@@ -15,16 +15,16 @@ class Profiler_Selector:
             script.result()
             
         elif self.submodule == 'dns':
-            import aegiscli.tools.profiler.submodules.dns_module as dns_module
-            script = dns_module.DNS(
+            from aegiscli.tools.profiler.submodules.dns_module import DNS
+            script = DNS(
                 settings=self.settings,
                 submodule=self.submodule,
                 target=self.target
             )
             script.result()
         elif self.submodule == 'web':
-            import aegiscli.tools.profiler.submodules.web as web
-            script = web.WebFinger(
+            from aegiscli.tools.profiler.submodules.web import WebFinger
+            script = WebFinger(
                 settings=self.settings,
                 submodule=self.submodule,
                 target=self.target

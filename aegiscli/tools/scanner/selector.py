@@ -3,15 +3,24 @@ class Scanner_Selector:
         self.submodule = submodule
         self.target = target
         self.settings = settings
-        self.kwargs = kwargs  # {"ports": "1-80"}
+        self.kwargs = kwargs  
 
     def selector(self):
         if self.submodule == 'port':
-            import aegiscli.tools.scanner.submodules.port as port
-            script = port.Port(
+            from aegiscli.tools.scanner.submodules.port import Port
+            script = Port(
                 settings=self.settings,
                 submodule=self.submodule,
                 target=self.target,
-                ports=self.kwargs.get("ports")  # cleanly pulls ports out
+                ports=self.kwargs.get("ports") 
+            )
+            script.result()
+
+        elif self.submodule == 'host':
+            from aegiscli.tools.scanner.submodules.host import Host
+            script = Host(
+                settings=self.settings,
+                submodule=self.submodule,
+                target=self.target,
             )
             script.result()

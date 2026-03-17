@@ -24,16 +24,15 @@ class Port(Scanner):
         self.user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
 
     def parse_ports(self, ports_arg):
-        # no flag passed — use default top 1024
         if ports_arg is None:
             return range(1, 1025)
-        # range format: "1-1024"
         if "-" in ports_arg:
             start, end = ports_arg.split("-")
             return range(int(start), int(end) + 1)
-        # list format: "80,443,8080"
         if "," in ports_arg:
             return [int(p) for p in ports_arg.split(",")]
+        # single port
+        return [int(ports_arg)]
 
     async def _grab_http_banner(self, reader, writer) -> str | None:
         writer.write(
