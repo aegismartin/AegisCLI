@@ -337,11 +337,17 @@ if [[ -n "$PORT_LOG" ]]; then
     json_assert "$PORT_LOG" "port: elapsed rounded to 2dp" \
         "e = d['elapsed']; assert e == round(e, 2)"
 
-    json_assert "$PORT_LOG" "port: open_ports entries have port and banner keys" \
-        "assert all('port' in p and 'banner' in p for p in d['data']['open_ports'])"
+    json_assert "$PORT_LOG" "port: open_ports entries have port, banner, and service keys" \
+        "assert all('port' in p and 'banner' in p and 'service' in p for p in d['data']['open_ports'])"
 
     json_assert "$PORT_LOG" "port: port values are integers" \
         "assert all(isinstance(p['port'], int) for p in d['data']['open_ports'])"
+
+    json_assert "$PORT_LOG" "port: service is dict or null — no other types" \
+        "assert all(p['service'] is None or isinstance(p['service'], dict) for p in d['data']['open_ports'])"
+
+    json_assert "$PORT_LOG" "port: non-null service entries have protocol field" \
+        "assert all('protocol' in p['service'] for p in d['data']['open_ports'] if p['service'] is not None)"
 else
     fail "port: no log file found"
     skip "port: all JSON checks skipped"

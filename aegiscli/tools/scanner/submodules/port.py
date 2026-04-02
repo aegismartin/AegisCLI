@@ -1,6 +1,7 @@
 import asyncio
 import socket
 from aegiscli.tools.scanner.scanner import Scanner
+from aegiscli.core.helpers.service import parse as parse_service
 from aegiscli.core.helpers.formatter import s
 from aegiscli.core.utils.logger import log, logging, log_json
 from aegiscli.core.utils import exporter
@@ -16,7 +17,7 @@ class Port(Scanner):
         self.ports = self.parse_ports(ports)
         # caps concurrent TCP connections — prevents OS file descriptor exhaustion
         self.semaphore = asyncio.Semaphore(400)
-        self.data = None       # list of (port, banner) tuples after fetch()
+        self.data = None       # list of (port, banner, service) tuples after fetch()
         self.elapsed = None
         self.passive_ports = {21, 22, 23, 25, 110, 143, 587, 3306, 5432, 6379, 27017, 9200, 11211}
         self.http_probe = {80, 8080, 8000, 8008, 8888, 3000, 5000}
@@ -130,7 +131,7 @@ class Port(Scanner):
                 verbose.fail(f"Port {port} — banner grab failed ({type(e).__name__})")
                 banner = None
 
-            return (port, banner)
+            return (port, banner, parse_service(banner, port))
 
     def fetch(self):
         # resolve target upfront — fail early before touching the network at scale
@@ -157,7 +158,7 @@ class Port(Scanner):
         self.data = asyncio.run(self.run_scan())
         self.elapsed = round(time.time() - start, 2)
 
-        banner_count = sum(1 for _, b in self.data if b)
+        banner_count = sum(1 for _, b, _s in self.data if b)
         verbose.ok(f"Event loop returned — {len(self.data)} open ({banner_count} banners grabbed), {port_count - len(self.data)} closed/filtered in {self.elapsed}s")
 
     async def run_scan(self):
@@ -165,7 +166,7 @@ class Port(Scanner):
         tasks = [self.check_port(self.ip, port) for port in self.ports]
         # fire all concurrently, collect results in original order
         results = await asyncio.gather(*tasks)
-        # strip None (closed ports) — return only confirmed open (port, banner) tuples
+        # strip None (closed ports) — return only confirmed open (port, banner, service) tuples
         return [r for r in results if r is not None]
 
     def display(self):
@@ -181,7 +182,7 @@ class Port(Scanner):
                 "service": get_service(port),
                 "banner": banner if banner else "None"
             }
-            for port, banner in sorted(self.data, key=lambda x: x[0])
+            for port, banner, _service in sorted(self.data, key=lambda x: x[0])
         ]
 
         s.header("Port Scanner")
@@ -196,8 +197,8 @@ class Port(Scanner):
             elapsed=self.elapsed,
             data={
                 "open_ports": [
-                    {"port": port, "banner": banner}
-                    for port, banner in self.data
+                    {"port": port, "banner": banner, "service": service}
+                    for port, banner, service in self.data
                 ]
             }
         )
