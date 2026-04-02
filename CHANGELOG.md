@@ -5,6 +5,19 @@ The format is based on [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.6.1a0] - 2026-04-02
+
+### Added
+- `service.py` — internal banner parsing helper for scanner submodules; parses raw banner strings into structured dicts (protocol, software, version, os_hint)
+- Service discovery wired into `port.py` — each open port result now carries a parsed `service` field alongside the raw banner
+
+### Architecture
+- `service.py` lives in `submodules/` as a shared internal helper — justified by `udp.py` being a planned consumer of the same logic
+- Raw banner preserved in all cases — `service` is a parsed layer on top, never a replacement
+- `service` is `null` in JSON output when banner is empty or unrecognised — parser never blocks port reporting
+
+---
+
 ## [0.6.0a0] - 2026-03-17
 
 ### Added

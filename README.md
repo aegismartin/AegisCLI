@@ -4,9 +4,9 @@ AegisCLI is a lightweight recon framework designed to eliminate tool-juggling he
 
 ---
 
-## 🚨 Current Version: **0.6.0 Alpha**
+## 🚨 Current Version: **0.6.1 Alpha**
 
-This release adds **host discovery** to the scanner — ICMP echo with raw sockets, TCP fallback for no-root environments, TTL-based OS fingerprinting, and full CIDR range support.
+This release adds **service discovery** to the port scanner — banner strings are now parsed into structured identity (protocol, software, version) and included in JSON log output alongside the raw banner.
 
 ---
 
@@ -150,7 +150,6 @@ Design principles:
 
 ### Short-term
 
-* Add service discovery by banner grabbing
 * Web Fingerprinter upgrade — deeper tech stack detection, framework fingerprinting
 
 ### Medium-term
@@ -174,14 +173,12 @@ Design principles:
 
 Full history available in `CHANGELOG.md`.
 
-Latest changes in **0.6.0 Alpha**:
+Latest changes in **0.6.1 Alpha**:
 
-* Host discovery added as `scanner host` submodule
-* ICMP echo with raw socket support — requires root, provides TTL and OS fingerprinting
-* TCP fallback for no-root environments — probes ports 22, 80, 443
-* CIDR range support — sweep entire subnets (e.g. `192.168.1.0/24`)
-* Hostname resolution via `getaddrinfo` — returns all A records, not just one
-* Logs export alive hosts only — dead entries stripped to keep logs clean
+* `service.py` added — internal banner parsing helper shared across scanner submodules
+* Service discovery wired into port scanner — each result now carries a structured `service` field in JSON output
+* Raw banner preserved alongside parsed service — parser never blocks port reporting
+* `service` is `null` when banner is empty or unrecognised
 
 ---
 
