@@ -53,4 +53,5 @@ def stop_log():
     global file, logging
     if file:
         file.close()
+        file = None
     logging = False

@@ -2,7 +2,7 @@ from colorama import Fore, Style
 from aegiscli.core.utils.logger import log
 import sys
 
-USE_GLYPHS = sys.stdout.encoding.lower() == "utf-8"
+USE_GLYPHS = (sys.stdout.encoding or "").lower() == "utf-8"
 
 class Verbose:
     def __init__(self):

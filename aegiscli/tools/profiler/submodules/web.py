@@ -15,8 +15,7 @@ class WebFinger(Profiler):
         super().__init__(settings, submodule, target)
 
         # strip protocol to get bare domain for SSL socket connection
-        self.domain = self.target.replace("http://", "") if self.target.startswith("http://") else self.target
-        self.domain = self.target.replace("https://", "") if self.target.startswith("https://") else self.target
+        self.domain = self.target.replace("https://", "").replace("http://", "")
         self.elapsed = None
         self.tab = " " * 4
 
@@ -60,11 +59,7 @@ class WebFinger(Profiler):
 
         if not self.target.startswith("http://") and not self.target.startswith("https://"):
             verbose.write("No protocol detected, attempting HTTPS first")
-            try:
-                self.target = "https://" + self.target
-            except Exception:
-                verbose.write("HTTPS unavailable, falling back to HTTP")
-                self.target = "http://" + self.target
+            self.target = "https://" + self.target
 
         # follow_redirects=True — we want the final destination, not the redirect chain
         # timeout=5 — aggressive but necessary, slow targets aren't useful for recon
@@ -222,13 +217,16 @@ class WebFinger(Profiler):
             log(f"{Fore.RED}[ERROR]{Style.RESET_ALL} SSL handshake timed out")
             raise
         except ConnectionRefusedError:
-            verbose.fail("Port 443 not accepting connections")
-            log(f"{Fore.RED}[ERROR]{Style.RESET_ALL} Port 443 refused connection on {self.domain}")
-            raise
+            verbose.fail("Port 443 not accepting connections — skipping cert")
+            log(f"{Fore.YELLOW}[WARN]{Style.RESET_ALL} No TLS on {self.domain} — cert skipped")
+            return
         except Exception as e:
             verbose.fail(f"Certificate retrieval failed: {type(e).__name__}")
             log(f"{Fore.RED}[ERROR]{Style.RESET_ALL} Certificate retrieval failed: {type(e).__name__}")
             raise
+
+    def tech_stack(self):
+        pass
 
     def display(self):
         # flattener() normalizes ssl.getpeercert()'s insane nested tuple structure
@@ -274,7 +272,10 @@ class WebFinger(Profiler):
             self.headers_module()  # filter + parse headers into self.headers
             verbose.space()
 
-            self.get_cert()        # open raw SSL socket, populate self.certs
+            try:
+                self.get_cert()        # open raw SSL socket, populate self.certs
+            except Exception:
+                pass                   # already logged inside get_cert(), scan continues
             verbose.space()
 
             self.elapsed = round(time.time() - start, 2)

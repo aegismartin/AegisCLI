@@ -5,6 +5,21 @@ The format is based on [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.6.2a0] - 2026-04-13
+
+### Fixed
+- `web.py` — `self.domain` stripping logic was broken; second assignment always overwrote the first regardless of protocol
+- `web.py` — dead `try/except` around string assignment in `fetch()` removed; HTTP fallback was unreachable
+- `web.py` — `ConnectionRefusedError` in `get_cert()` now soft-fails with a warning instead of aborting the scan; HTTP-only targets no longer crash
+- `web.py` — `get_cert()` call in `result()` isolated in its own `try/except` — cert failure no longer kills the full pipeline
+- `exporter.py` — `elapsed` type hint corrected from `int` to `float`; dead `LOG_DIR` definition removed
+- `logger.py` — `stop_log()` now resets `file` to `None` after closing to prevent double-close `ValueError`
+- `flagger.py` — `USE_GLYPHS` check now guards against `None` encoding when stdout is redirected
+- `cli.py` — `[ERROR]` in exception handler now uses consistent color formatting
+- `selector.py` — unknown submodule no longer silently no-ops; raises `ValueError` instead
+
+---
+
 ## [0.6.1a0] - 2026-04-02
 
 ### Added

@@ -4,9 +4,9 @@ AegisCLI is a lightweight recon framework designed to eliminate tool-juggling he
 
 ---
 
-## 🚨 Current Version: **0.6.1 Alpha**
+## 🚨 Current Version: **0.6.2 Alpha**
 
-This release adds **service discovery** to the port scanner — banner strings are now parsed into structured identity (protocol, software, version) and included in JSON log output alongside the raw banner.
+This release is a bug fix pass across the web fingerprinter and core utilities — no new features.
 
 ---
 
@@ -151,11 +151,12 @@ Design principles:
 ### Short-term
 
 * Web Fingerprinter upgrade — deeper tech stack detection, framework fingerprinting
+* Scanner `udp.py` — UDP port scanning
+* Upgrade `dns` and `whois` submodules to actively interact with their discovery and dig deeper
 
 ### Medium-term
 
-* Scanner `udp.py` — UDP port scanning
-* Upgrade `dns` and `whois` submodules to actively interact with their discovery and dig deeper
+
 * `settings.json` configuration engine — user-configurable defaults for concurrency, timeouts, output behavior, and module-specific parameters
 * Enumerator module with ffuf or gobuster integration
 * Analyser module (third-party API enrichment — Shodan, VirusTotal, Censys, and more.)
@@ -173,12 +174,11 @@ Design principles:
 
 Full history available in `CHANGELOG.md`.
 
-Latest changes in **0.6.1 Alpha**:
+Latest changes in **0.6.2 Alpha**:
 
-* `service.py` added — internal banner parsing helper shared across scanner submodules
-* Service discovery wired into port scanner — each result now carries a structured `service` field in JSON output
-* Raw banner preserved alongside parsed service — parser never blocks port reporting
-* `service` is `null` when banner is empty or unrecognised
+* Bug fix pass across `web.py`, `exporter.py`, `logger.py`, `flagger.py`, `cli.py`, and `selector.py`
+* Web fingerprinter no longer crashes on HTTP-only targets — cert failure is now a soft warn
+* Core utilities hardened against edge cases (stdout redirect, double-close, silent no-ops)
 
 ---
 

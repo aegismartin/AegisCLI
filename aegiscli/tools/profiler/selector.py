@@ -30,3 +30,5 @@ class Profiler_Selector:
                 target=self.target
             )
             script.result()
+        else:
+            raise ValueError(f"Unknown submodule: {self.submodule}")

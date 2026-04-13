@@ -1,6 +1,7 @@
 import argparse
 import aegiscli.core.utils.logger as logger
 import aegiscli.core.utils.flagger as flagger
+from colorama import Fore, Style
 import sys
 def main():
     parser = argparse.ArgumentParser(
@@ -60,7 +61,7 @@ def main():
             initializator.selector()
 
     except Exception as e:
-        logger.log(f"[ERROR]: {e}")
+        logger.log(f"{Fore.RED}[ERROR]{Style.RESET_ALL}: {e}")
         sys.exit(1)
 
     finally:
