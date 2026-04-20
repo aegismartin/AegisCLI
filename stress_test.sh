@@ -253,6 +253,25 @@ if [[ -n "$WEB_LOG" ]]; then
     json_field_exists "$WEB_LOG" "data.connection"
     json_field_exists "$WEB_LOG" "data.headers"
     json_field_exists "$WEB_LOG" "data.certs"
+    json_field_exists "$WEB_LOG" "data.body_signals"
+
+    json_assert "$WEB_LOG" "web: body_signals has meta key" \
+        "assert 'meta' in d['data']['body_signals']"
+
+    json_assert "$WEB_LOG" "web: body_signals has paths key" \
+        "assert 'paths' in d['data']['body_signals']"
+
+    json_assert "$WEB_LOG" "web: body_signals has html_attrs key" \
+        "assert 'html_attrs' in d['data']['body_signals']"
+
+    json_assert "$WEB_LOG" "web: body_signals.meta is dict or string" \
+        "v = d['data']['body_signals']['meta']; assert isinstance(v, (dict, str))"
+
+    json_assert "$WEB_LOG" "web: body_signals.paths is list or string" \
+        "v = d['data']['body_signals']['paths']; assert isinstance(v, (list, str))"
+
+    json_assert "$WEB_LOG" "web: body_signals.html_attrs is dict or string" \
+        "v = d['data']['body_signals']['html_attrs']; assert isinstance(v, (dict, str))"
 else
     fail "web: no log file found"
     skip "web: JSON checks skipped"

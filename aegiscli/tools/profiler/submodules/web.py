@@ -8,6 +8,44 @@ from aegiscli.core.helpers.formatter import s, parse_value, parse_cookie, flatte
 import ssl
 import socket
 import time
+from html.parser import HTMLParser
+
+class BodyParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.meta = {}
+        self.paths = []
+        self.html_attrs = {}
+
+        self._important_meta = ["generator", "application-name", "powered-by"]
+        self._path_signatures = [
+            "/wp-content/", "/wp-includes/",          # WordPress
+            "/sites/default/files/", "/sites/all/",   # Drupal
+            "/__nuxt/",                                # Nuxt
+            "/_next/",                                 # Next.js
+            "/static/chunks/",                         # Next.js
+            "/assets/application-",                    # Rails
+        ]
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+
+        if tag == "meta":
+            name = attrs.get("name", "").lower()
+            if name in self._important_meta:
+                self.meta[name] = attrs.get("content")
+
+        elif tag in ("script", "link"):
+            path = attrs.get("src") or attrs.get("href") or ""
+            for sig in self._path_signatures:
+                if sig in path:
+                    self.paths.append(sig.strip("/").split("/")[0])  # e.g. "wp-content"
+
+        elif tag == "html":
+            if "ng-version" in attrs:
+                self.html_attrs["ng-version"] = attrs["ng-version"]
+            if "data-reactroot" in attrs:
+                self.html_attrs["data-reactroot"] = True
 
 
 class WebFinger(Profiler):
@@ -18,6 +56,7 @@ class WebFinger(Profiler):
         self.domain = self.target.replace("https://", "").replace("http://", "")
         self.elapsed = None
         self.tab = " " * 4
+        self.tech = {}
 
         # whitelist of headers worth extracting — everything else is noise
         # inline comments explain what each header leaks or reveals
@@ -52,6 +91,7 @@ class WebFinger(Profiler):
             "issuer", "notAfter", "subject", "subjectAltName", "version"
         ]
         self.certs = {}  # populated by get_cert()
+        self.body_signs = {}
 
     def fetch(self):
         # normalize URL — prepend https:// if no protocol given
@@ -225,8 +265,30 @@ class WebFinger(Profiler):
             log(f"{Fore.RED}[ERROR]{Style.RESET_ALL} Certificate retrieval failed: {type(e).__name__}")
             raise
 
+    def body_analysis(self):
+        verbose.step("Parsing response body for tech signals")
+        parser = BodyParser()
+        parser.feed(self.response.text)
+        self.body_signs["meta"] = parser.meta if parser.meta else "not found"
+        self.body_signs["paths"] = list(set(parser.paths)) if parser.paths else "not found"
+        self.body_signs["html_attrs"] = parser.html_attrs if parser.html_attrs else "not found"
+
+        if parser.meta:
+            verbose.indent()
+            for k, v in parser.meta.items():
+                verbose.write(f"{k}: {v}")
+            verbose.unindent()
+        if parser.paths:
+            verbose.write(f"Path signatures matched: {', '.join(set(parser.paths))}")
+        if parser.html_attrs:
+            verbose.write(f"HTML root attributes: {', '.join(parser.html_attrs.keys())}")
+
+        verbose.ok(f"Body parsed — meta: {len(parser.meta)}, path hits: {len(parser.paths)}, html attrs: {len(parser.html_attrs)}")
+        
+
     def tech_stack(self):
         pass
+
 
     def display(self):
         # flattener() normalizes ssl.getpeercert()'s insane nested tuple structure
@@ -238,6 +300,8 @@ class WebFinger(Profiler):
         s.print_dict(flattener(self.certs))
         s.subheader("Headers")
         s.print_dict(self.headers)
+        s.subheader("Body Signals")
+        s.print_dict(self.body_signs)
 
     def export(self):
         # flattener called here to normalize certs for JSON
@@ -249,7 +313,8 @@ class WebFinger(Profiler):
             data={
                 "connection": self.connection_data,
                 "headers": self.headers,
-                "certs": flattener(self.certs)
+                "certs": flattener(self.certs),
+                "body_signals": self.body_signs
             }
         )
         # log_json only fires if --log flag was passed at CLI level
@@ -278,6 +343,9 @@ class WebFinger(Profiler):
                 pass                   # already logged inside get_cert(), scan continues
             verbose.space()
 
+            self.body_analysis()
+            verbose.space()
+
             self.elapsed = round(time.time() - start, 2)
             verbose.ok(f"Scan completed in {self.elapsed:.3f}s total")
             verbose.space()
@@ -291,6 +359,9 @@ class WebFinger(Profiler):
             raise
 
 
+
+#Testing area for devs only, modified dynamically depending on prod needs ignore it if youre not a contributor
 if __name__ == "__main__":
-    initializator = WebFinger(settings=None, submodule=None, target="httpbin.org")
-    initializator.result()
+    initializator = WebFinger(settings=None, submodule=None, target="joomla.org")
+    initializator.fetch()
+    initializator.body_analysis()

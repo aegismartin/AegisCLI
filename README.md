@@ -4,9 +4,9 @@ AegisCLI is a lightweight recon framework designed to eliminate tool-juggling he
 
 ---
 
-## 🚨 Current Version: **0.6.2 Alpha**
+## 🚨 Current Version: **0.7.0 Alpha**
 
-This release is a bug fix pass across the web fingerprinter and core utilities — no new features.
+Web Fingerprinter upgrade — response body analysis added for CMS and framework detection. Zero new dependencies.
 
 ---
 
@@ -21,6 +21,7 @@ This release is a bug fix pass across the web fingerprinter and core utilities �
   * SSL/TLS certificate inspection (subject, issuer, expiry date, SANs)
   * HTTP header profiling (Server, HSTS, cookies, CDN detection, security headers)
   * Cookie parsing with detailed attribute extraction
+  * **Response body analysis** — meta tag extraction, framework path signature matching, HTML root attribute detection (Angular, React SSR)
 
 ### Scanner Module
 
@@ -150,7 +151,7 @@ Design principles:
 
 ### Short-term
 
-* Web Fingerprinter upgrade — deeper tech stack detection, framework fingerprinting
+* Web Fingerprinter upgrade — deeper tech stack detection, framework fingerprinting (Currently in Progress)
 * Scanner `udp.py` — UDP port scanning
 * Upgrade `dns` and `whois` submodules to actively interact with their discovery and dig deeper
 
@@ -174,12 +175,12 @@ Design principles:
 
 Full history available in `CHANGELOG.md`.
 
-Latest changes in **0.6.2 Alpha**:
+Latest changes in **0.7.0 Alpha**:
 
-* Bug fix pass across `web.py`, `exporter.py`, `logger.py`, `flagger.py`, `cli.py`, and `selector.py`
-* Web fingerprinter no longer crashes on HTTP-only targets — cert failure is now a soft warn
-* Core utilities hardened against edge cases (stdout redirect, double-close, silent no-ops)
-
+* Web Fingerprinter upgraded with response body analysis — meta tags, framework path signatures, HTML root attributes
+* `BodyParser` helper class added to `web.py` — stdlib only, no new dependencies
+* `body_signals` field added to JSON envelope output
+* 
 ---
 
 ## ⚖️ License

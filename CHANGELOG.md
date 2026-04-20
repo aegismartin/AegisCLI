@@ -4,6 +4,19 @@ All notable changes to **AegisCLI** will be documented in this file.
 The format is based on [Semantic Versioning](https://semver.org/).
 
 ---
+## [0.7.0a0] - 2026-04-20
+
+### Added
+- `web.py` — `BodyParser` class using stdlib `html.parser` — no new dependencies
+- `web.py` — `body_analysis()` method — parses response body for CMS/framework signals; populates `self.body_signs`
+- Body signal extraction: meta tags (`generator`, `application-name`, `powered-by`), framework path signatures in script/link src attributes, Angular/React HTML root attribute detection
+- Path signatures cover WordPress (`/wp-content/`, `/wp-includes/`), Drupal (`/sites/default/`), Next.js (`/_next/`, `/static/chunks/`), Nuxt (`/__nuxt/`), Rails (`/assets/application-`)
+- `body_signals` included in JSON envelope output and terminal display
+
+### Architecture
+- `BodyParser` lives at module level in `web.py` — internal helper, no external consumers anticipated
+
+---
 
 ## [0.6.2a0] - 2026-04-13
 
